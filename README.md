@@ -1,4 +1,4 @@
-# output-to-chan
+# output-to-chan [![Build Status](https://travis-ci.org/Deraen/output-to-chan.svg)](https://travis-ci.org/Deraen/output-to-chan)
 
 Implements a java.io.Writer which puts the input lines to core.async channel.
 
