@@ -23,13 +23,21 @@
 (facts chan-writer
   (let [<chan (chan)
         writer (chan-writer <chan)]
-    (go
-      (.write writer (char-array "foobar\n") 0 7))
+    (.write writer (char-array "foobar\n") 0 7)
     (try<!! <chan) => "foobar"
 
-    (go
-      (.write writer (char-array "foo\nbar") 0 7)
-      (.close writer))
+    (.write writer (char-array "foo\nbar") 0 7)
+    (.close writer)
 
     (try<!! <chan) => "foo"
     (try<!! <chan) => "bar"))
+
+(./aprint (macroexpand '(with-chan-writer <chan
+                                          (println "foobar"))))
+
+(fact with-chan-writer
+  (let [<chan (chan)]
+    pr
+    (with-chan-writer <chan
+                      (println "foobar"))
+    (try<!! <chan) => "foobar"))

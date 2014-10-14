@@ -9,22 +9,29 @@
   "Creates a java.io.Writer which will put each line of
    input into a channel."
   [<chan]
-  (let [buffer (atom nil)]
+  (let [buffer (atom [])]
     (proxy [java.io.Writer] []
+      (append [c]
+        (cond
+          (is-newline? c) (when @buffer
+                            (.flush this))
+          :default (swap! buffer conj c))
+        this)
+
       (write [^chars cbuf ^Long off ^Long len]
-          (loop [i off]
-            (let [c (aget cbuf i)]
-              (cond
-                (is-newline? c) (do
-                                  (put! <chan @buffer)
-                                  (reset! buffer nil))
-                :default (swap! buffer #(str % c)))
-              (when (< (inc i) len) (recur (inc i))))))
+        (loop [i off]
+          (.append this (aget cbuf i))
+          (when (< (inc i) len) (recur (inc i)))))
+
+      (flush []
+        (when @buffer
+          (put! <chan (apply str @buffer))
+          (reset! buffer [])))
 
       (close []
-        (when @buffer (put! <chan @buffer))))))
+        (.flush this)))))
 
-(defmacro with-chan-writer [<chan & [body]]
-  `(with-open [o (chan-writer ~<chan)]
-     (with-binding [*out* o]
-                   ~@body)))
+(defmacro with-chan-writer [<chan & body]
+  `(with-open [o# (chan-writer ~<chan)]
+     (binding [*out* o#]
+       ~@body)))
