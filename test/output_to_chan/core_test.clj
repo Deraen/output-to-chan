@@ -32,8 +32,9 @@
     (try<!! <chan) => "foo"
     (try<!! <chan) => "bar"))
 
-(./aprint (macroexpand '(with-chan-writer <chan
-                                          (println "foobar"))))
+(comment
+  (./aprint (macroexpand '(with-chan-writer <chan
+                                            (println "foobar")))))
 
 (fact with-chan-writer
   (let [<chan (chan)]
