@@ -24,6 +24,7 @@
   (let [<chan (chan)
         writer (chan-writer <chan)]
     (.write writer (char-array "foobar\n") 0 7)
+    (.flush writer)
     (try<!! <chan) => "foobar"
 
     (.write writer (char-array "foo\nbar") 0 7)
@@ -32,13 +33,8 @@
     (try<!! <chan) => "foo"
     (try<!! <chan) => "bar"))
 
-(comment
-  (./aprint (macroexpand '(with-chan-writer <chan
-                                            (println "foobar")))))
-
 (fact with-chan-writer
   (let [<chan (chan)]
-    pr
     (with-chan-writer <chan
                       (println "foobar"))
     (try<!! <chan) => "foobar"))

@@ -1,37 +1,12 @@
 (ns output-to-chan.core
-  (:require [clojure.core.async :refer [put!]]
-            [clojure.string :as str]))
-
-(defn is-newline? [c]
-  (= c \newline))
+  (:import [output-to-chan ChanStream]))
 
 (defn chan-writer
-  "Creates a java.io.Writer which will put each line of
-   input into a channel."
   [<chan]
-  (let [buffer (atom [])]
-    (proxy [java.io.Writer] []
-      (append [c]
-        (cond
-          (is-newline? c) (when @buffer
-                            (.flush this))
-          :default (swap! buffer conj c))
-        this)
-
-      (write [^chars cbuf ^Long off ^Long len]
-        (loop [i off]
-          (.append this (aget cbuf i))
-          (when (< (inc i) len) (recur (inc i)))))
-
-      (flush []
-        (when @buffer
-          (put! <chan (apply str @buffer))
-          (reset! buffer [])))
-
-      (close []
-        (.flush this)))))
+  (clojure.java.io/writer (ChanStream. <chan)))
 
 (defmacro with-chan-writer [<chan & body]
-  `(with-open [o# (chan-writer ~<chan)]
-     (binding [*out* o#]
-       ~@body)))
+  `(with-open [stream# (ChanStream. ~<chan)]
+     (with-open [o# (clojure.java.io/writer stream#)]
+       (binding [*out* o#]
+         ~@body))))
